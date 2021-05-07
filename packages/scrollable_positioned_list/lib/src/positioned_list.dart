@@ -135,6 +135,7 @@ class _PositionedListState extends State<PositionedList> {
   @override
   void initState() {
     super.initState();
+    // assert(widget.controller != null);
     scrollController = widget.controller ?? ScrollController();
     scrollController.addListener(_schedulePositionNotificationUpdate);
     _schedulePositionNotificationUpdate();
@@ -165,6 +166,13 @@ class _PositionedListState extends State<PositionedList> {
           physics: widget.physics,
           semanticChildCount: widget.semanticChildCount ?? widget.itemCount,
           slivers: <Widget>[
+            //floating now work
+            // SliverAppBar(
+            //   title: Text("SliverAppBar"),
+            //   floating: true,
+            //   pinned: false,
+            //   snap: true,
+            // ),
             if (widget.positionedIndex > 0)
               SliverPadding(
                 padding: _leadingSliverPadding,

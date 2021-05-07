@@ -173,6 +173,8 @@ class ItemScrollController {
   /// If `false`, then [jumpTo] and [scrollTo] must not be called.
   bool get isAttached => _scrollableListState != null;
 
+  late ScrollController scrollController;
+
   _ScrollablePositionedListState? _scrollableListState;
 
   /// Immediately, without animation, reconfigure the list so that the item at
@@ -273,6 +275,9 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
     widget.itemScrollController?._attach(this);
     primary.itemPositionsNotifier.itemPositions.addListener(_updatePositions);
     secondary.itemPositionsNotifier.itemPositions.addListener(_updatePositions);
+    secondary.scrollController = ScrollController(keepScrollOffset: false);
+    assert(widget.itemScrollController?.scrollController != null);
+    primary.scrollController = widget.itemScrollController?.scrollController ?? ScrollController(keepScrollOffset: false);
   }
 
   @override
@@ -564,7 +569,7 @@ class _ListDisplayDetails {
   _ListDisplayDetails(this.key);
 
   final itemPositionsNotifier = ItemPositionsNotifier();
-  final scrollController = ScrollController(keepScrollOffset: false);
+  late ScrollController scrollController;
 
   /// The index of the item to scroll to.
   int target = 0;

@@ -4,12 +4,13 @@
 
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:scroll_app_bar/scroll_app_bar.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-const numberOfItems = 5001;
+const numberOfItems = 51;
 const minItemHeight = 20.0;
 const maxItemHeight = 150.0;
-const scrollDuration = Duration(seconds: 2);
+const scrollDuration = Duration(milliseconds: 400);
 
 const randomMax = 1 << 32;
 
@@ -54,6 +55,7 @@ class _ScrollablePositionedListPageState
     extends State<ScrollablePositionedListPage> {
   /// Controller to scroll or jump to a particular item.
   final ItemScrollController itemScrollController = ItemScrollController();
+  final scrollController = ScrollController(keepScrollOffset: false);
 
   /// Listener that reports the position of items when the list is scrolled.
   final ItemPositionsListener itemPositionsListener =
@@ -77,30 +79,36 @@ class _ScrollablePositionedListPageState
             minItemHeight);
     itemColors = List<Color>.generate(numberOfItems,
         (int _) => Color(colorGenerator.nextInt(randomMax)).withOpacity(1));
+    itemScrollController.scrollController = scrollController;
   }
 
   @override
   Widget build(BuildContext context) => Material(
         child: OrientationBuilder(
-          builder: (context, orientation) => Column(
-            children: <Widget>[
-              Expanded(
-                child: list(orientation),
-              ),
-              positionsView,
-              Row(
-                children: <Widget>[
-                  Column(
-                    children: <Widget>[
-                      scrollControlButtons,
-                      const SizedBox(height: 10),
-                      jumpControlButtons,
-                      alignmentControl,
-                    ],
-                  ),
-                ],
-              )
-            ],
+          builder: (context, orientation) => Scaffold(
+            appBar: ScrollAppBar(title: Text("TextTitle"), controller: scrollController),
+            body: Column(
+              children: <Widget>[
+                Expanded(
+                    child: ScrollConfiguration(
+                  behavior: MyBehavior(),
+                  child: list(orientation),
+                )),
+                positionsView,
+                Row(
+                  children: <Widget>[
+                    Column(
+                      children: <Widget>[
+                        scrollControlButtons,
+                        const SizedBox(height: 10),
+                        jumpControlButtons,
+                        alignmentControl,
+                      ],
+                    ),
+                  ],
+                )
+              ],
+            ),
           ),
         ),
       );
@@ -131,6 +139,7 @@ class _ScrollablePositionedListPageState
         itemScrollController: itemScrollController,
         itemPositionsListener: itemPositionsListener,
         reverse: reversed,
+        padding: EdgeInsets.only(bottom: 250),
         scrollDirection: orientation == Orientation.portrait
             ? Axis.vertical
             : Axis.horizontal,
@@ -185,8 +194,8 @@ class _ScrollablePositionedListPageState
           scrollButton(5),
           scrollButton(10),
           scrollButton(100),
-          scrollButton(1000),
-          scrollButton(5000),
+          scrollButton(numberOfItems - 1),
+          // scrollButton(5000),
         ],
       );
 
@@ -197,8 +206,8 @@ class _ScrollablePositionedListPageState
           jumpButton(5),
           jumpButton(10),
           jumpButton(100),
-          jumpButton(1000),
-          jumpButton(5000),
+          jumpButton(numberOfItems - 1),
+          // jumpButton(5000),
         ],
       );
 
@@ -245,5 +254,12 @@ class _ScrollablePositionedListPageState
         ),
       ),
     );
+  }
+}
+class MyBehavior extends ScrollBehavior {
+  @override
+  Widget buildViewportChrome(
+      BuildContext context, Widget child, AxisDirection axisDirection) {
+    return child;
   }
 }
