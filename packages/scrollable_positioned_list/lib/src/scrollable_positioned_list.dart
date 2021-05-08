@@ -459,6 +459,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
     final itemPosition = primary.itemPositionsNotifier.itemPositions.value
         .firstWhereOrNull(
             (ItemPosition itemPosition) => itemPosition.index == index);
+    print("_startScroll $index ${itemPosition}");
     if (itemPosition != null) {
       // Scroll directly.
       final localScrollAmount = itemPosition.itemLeadingEdge *
@@ -473,25 +474,56 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
       final scrollAmount = _screenScrollCount *
           primary.scrollController.position.viewportDimension;
       final startCompleter = Completer<void>();
-      final endCompleter = Completer<void>();
+      Completer? endCompleter = Completer<void>();
       startAnimationCallback = () {
-        SchedulerBinding.instance!.addPostFrameCallback((_) {
+        SchedulerBinding.instance!.addPostFrameCallback((_) async {
           startAnimationCallback = () {};
 
           opacity.parent = _opacityAnimation(opacityAnimationWeights).animate(
               AnimationController(vsync: this, duration: duration)..forward());
-          secondary.scrollController.jumpTo(-direction *
-              (_screenScrollCount *
-                      primary.scrollController.position.viewportDimension -
-                  alignment *
-                      secondary.scrollController.position.viewportDimension));
+          print("secondary.scrollController ${-direction}");
+          // secondary.scrollController.jumpTo(-direction *
+          //     (_screenScrollCount *
+          //             primary.scrollController.position.viewportDimension -
+          //         alignment *
+          //             secondary.scrollController.position.viewportDimension));
 
           startCompleter.complete(primary.scrollController.animateTo(
               primary.scrollController.offset + direction * scrollAmount,
               duration: duration,
               curve: curve));
-          endCompleter.complete(secondary.scrollController
-              .animateTo(0, duration: duration, curve: curve));
+
+          final _itemPosition = primary.itemPositionsNotifier.itemPositions.value
+              .firstWhereOrNull(
+                  (ItemPosition itemPosition) => itemPosition.index == index);
+          print("startCompleter.complete ${_itemPosition}");
+          if (_itemPosition != null) {
+            endCompleter = null;
+            // Scroll directly.
+            final localScrollAmount =
+                _itemPosition.itemLeadingEdge * primary.scrollController.position.viewportDimension;
+            await primary.scrollController.animateTo(
+                primary.scrollController.offset +
+                    localScrollAmount -
+                    alignment * primary.scrollController.position.viewportDimension,
+                duration: duration,
+                curve: curve);
+            setState(() {
+              // TODO: _startScroll can be re-entrant, which invalidates this assert.
+              // assert(!_isTransitioning);
+              secondary.target = index;
+              secondary.alignment = alignment;
+              _isTransitioning = true;
+            });
+            await Future.wait<void>([startCompleter.future]); //, endCompleter.future
+            _stopScroll();
+
+            return;
+
+          } else {
+            endCompleter!.complete(secondary.scrollController.animateTo(0, duration: duration, curve: curve));
+            print("endCompleter.complete ");
+          }
         });
       };
       setState(() {
@@ -501,7 +533,9 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
         secondary.alignment = alignment;
         _isTransitioning = true;
       });
-      await Future.wait<void>([startCompleter.future, endCompleter.future]);
+      print("Future.wait ");
+      await Future.wait<void>(
+          [startCompleter.future, if (endCompleter != null) endCompleter!.future]); //, endCompleter.future
       _stopScroll();
     }
   }
@@ -561,6 +595,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                   ? value
                   : element));
     }
+    // print("_updatePositions $itemPositions");
     widget.itemPositionsNotifier?.itemPositions.value = itemPositions;
   }
 }

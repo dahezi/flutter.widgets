@@ -136,7 +136,7 @@ class _PositionedListState extends State<PositionedList> {
   void initState() {
     super.initState();
     // assert(widget.controller != null);
-    scrollController = widget.controller ?? ScrollController();
+    scrollController = widget.controller ?? ScrollController(keepScrollOffset: false);
     scrollController.addListener(_schedulePositionNotificationUpdate);
     _schedulePositionNotificationUpdate();
   }

@@ -4,10 +4,11 @@
 
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:scroll_app_bar/scroll_app_bar.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-const numberOfItems = 51;
+int numberOfItems = 0;
 const minItemHeight = 20.0;
 const maxItemHeight = 150.0;
 const scrollDuration = Duration(milliseconds: 400);
@@ -109,6 +110,19 @@ class _ScrollablePositionedListPageState
                 )
               ],
             ),
+            floatingActionButton: FloatingActionButton(
+              child: Icon(Icons.add),
+              onPressed: () {
+                setState(() {
+                  itemColors.add(Color(Random(42490823).nextInt(randomMax)).withOpacity(1));
+                  itemHeights.add(numberOfItems.toDouble());
+                  numberOfItems = itemHeights.length;
+                });
+                SchedulerBinding.instance!.addPostFrameCallback((_) {
+                  scrollTo(numberOfItems - 1);
+                });
+              },
+            ),
           ),
         ),
       );
@@ -134,11 +148,12 @@ class _ScrollablePositionedListPageState
       );
 
   Widget list(Orientation orientation) => ScrollablePositionedList.builder(
-        itemCount: numberOfItems,
+        itemCount: itemHeights.length,
         itemBuilder: (context, index) => item(index, orientation),
         itemScrollController: itemScrollController,
         itemPositionsListener: itemPositionsListener,
         reverse: reversed,
+        physics: ClampingScrollPhysics(),
         padding: EdgeInsets.only(bottom: 250),
         scrollDirection: orientation == Orientation.portrait
             ? Axis.vertical
