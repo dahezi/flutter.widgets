@@ -173,8 +173,6 @@ class ItemScrollController {
   /// If `false`, then [jumpTo] and [scrollTo] must not be called.
   bool get isAttached => _scrollableListState != null;
 
-  late ScrollController scrollController;
-
   _ScrollablePositionedListState? _scrollableListState;
 
   /// Immediately, without animation, reconfigure the list so that the item at
@@ -245,6 +243,10 @@ class ItemScrollController {
   void _detach() {
     _scrollableListState = null;
   }
+
+  ScrollController? getPrimaryScrollController(){
+    return _scrollableListState?.primary.scrollController;
+  }
 }
 
 class _ScrollablePositionedListState extends State<ScrollablePositionedList>
@@ -275,9 +277,6 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
     widget.itemScrollController?._attach(this);
     primary.itemPositionsNotifier.itemPositions.addListener(_updatePositions);
     secondary.itemPositionsNotifier.itemPositions.addListener(_updatePositions);
-    secondary.scrollController = ScrollController(keepScrollOffset: false);
-    assert(widget.itemScrollController?.scrollController != null);
-    primary.scrollController = widget.itemScrollController?.scrollController ?? ScrollController(keepScrollOffset: false);
   }
 
   @override
@@ -541,6 +540,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
   }
 
   void _stopScroll({bool canceled = false}) {
+    print("_stopScroll $_isTransitioning");
     if (!_isTransitioning) {
       return;
     }
@@ -555,6 +555,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
     }
 
     setState(() {
+      print("_stopScroll ${opacity.value}");
       if (opacity.value >= 0.5) {
         // Secondary [ListView] is more visible than the primary; make it the
         // new primary.
@@ -604,7 +605,7 @@ class _ListDisplayDetails {
   _ListDisplayDetails(this.key);
 
   final itemPositionsNotifier = ItemPositionsNotifier();
-  late ScrollController scrollController;
+  final scrollController = ScrollController(keepScrollOffset: false);
 
   /// The index of the item to scroll to.
   int target = 0;

@@ -56,7 +56,6 @@ class _ScrollablePositionedListPageState
     extends State<ScrollablePositionedListPage> {
   /// Controller to scroll or jump to a particular item.
   final ItemScrollController itemScrollController = ItemScrollController();
-  final scrollController = ScrollController(keepScrollOffset: false);
 
   /// Listener that reports the position of items when the list is scrolled.
   final ItemPositionsListener itemPositionsListener =
@@ -80,52 +79,56 @@ class _ScrollablePositionedListPageState
             minItemHeight);
     itemColors = List<Color>.generate(numberOfItems,
         (int _) => Color(colorGenerator.nextInt(randomMax)).withOpacity(1));
-    itemScrollController.scrollController = scrollController;
   }
 
   @override
-  Widget build(BuildContext context) => Material(
-        child: OrientationBuilder(
-          builder: (context, orientation) => Scaffold(
-            appBar: ScrollAppBar(title: Text("TextTitle"), controller: scrollController),
-            body: Column(
-              children: <Widget>[
-                Expanded(
-                    child: ScrollConfiguration(
-                  behavior: MyBehavior(),
-                  child: list(orientation),
-                )),
-                positionsView,
-                Row(
-                  children: <Widget>[
-                    Column(
-                      children: <Widget>[
-                        scrollControlButtons,
-                        const SizedBox(height: 10),
-                        jumpControlButtons,
-                        alignmentControl,
-                      ],
-                    ),
-                  ],
-                )
-              ],
-            ),
-            floatingActionButton: FloatingActionButton(
-              child: Icon(Icons.add),
-              onPressed: () {
-                setState(() {
-                  itemColors.add(Color(Random(42490823).nextInt(randomMax)).withOpacity(1));
-                  itemHeights.add(numberOfItems.toDouble());
-                  numberOfItems = itemHeights.length;
-                });
-                SchedulerBinding.instance!.addPostFrameCallback((_) {
-                  scrollTo(numberOfItems - 1);
-                });
-              },
-            ),
+  Widget build(BuildContext context) {
+    return Material(
+      child: OrientationBuilder(
+        builder: (context, orientation) => Scaffold(
+          appBar: ScrollAppBar(
+            title: Text("TextTitle"),
+            controller: itemScrollController.getPrimaryScrollController() ?? ScrollController(keepScrollOffset: false),
+          ),
+          body: Column(
+            children: <Widget>[
+              Expanded(
+                  child: ScrollConfiguration(
+                behavior: MyBehavior(),
+                child: list(orientation),
+              )),
+              positionsView,
+              Row(
+                children: <Widget>[
+                  Column(
+                    children: <Widget>[
+                      scrollControlButtons,
+                      const SizedBox(height: 10),
+                      jumpControlButtons,
+                      alignmentControl,
+                    ],
+                  ),
+                ],
+              )
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            child: Icon(Icons.add),
+            onPressed: () {
+              setState(() {
+                itemColors.add(Color(Random(42490823).nextInt(randomMax)).withOpacity(1));
+                itemHeights.add(numberOfItems.toDouble() + 50);
+                numberOfItems = itemHeights.length;
+              });
+              SchedulerBinding.instance!.addPostFrameCallback((_) {
+                scrollTo(numberOfItems - 1);
+              });
+            },
           ),
         ),
-      );
+      ),
+    );
+  }
 
   Widget get alignmentControl => Row(
         mainAxisSize: MainAxisSize.max,
