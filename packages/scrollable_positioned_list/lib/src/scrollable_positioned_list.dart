@@ -479,8 +479,8 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
         SchedulerBinding.instance!.addPostFrameCallback((_) async {
           startAnimationCallback = () {};
 
-          opacity.parent = _opacityAnimation(opacityAnimationWeights).animate(
-              AnimationController(vsync: this, duration: duration)..forward());
+          opacity.parent = _opacityAnimation(opacityAnimationWeights)
+              .animate(AnimationController(vsync: this, duration: duration)..forward());
           print("secondary.scrollController ${-direction}");
 
           var sec = -direction *
@@ -507,7 +507,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
               .index;
           print("_itemPosition $index < ${max}");
 
-          if (_itemPosition != null  && index < (max + 5)) {
+          if (_itemPosition != null  && index < (max + 2)) {
             // primary.itemPositionsNotifier.itemPositions.value.forEach((element) { print("itemPositions ${element}");});
             // Scroll directly.
             final localScrollAmount =
@@ -525,7 +525,6 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
               secondary.target = index;
               secondary.alignment = alignment;
               _isTransitioning = true;
-              opacity.parent = const AlwaysStoppedAnimation<double>(0);
             });
             await Future.wait<void>([startCompleter.future]); //, endCompleter.future
             _stopScroll();

@@ -12,9 +12,11 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 int numberOfItems = 0;
 const minItemHeight = 20.0;
 const maxItemHeight = 150.0;
-const scrollDuration = Duration(milliseconds: 200);
+const scrollDuration = Duration(milliseconds: 1200);
 
 const randomMax = 1 << 32;
+
+late AnimationController _addItemController;
 
 void main() {
   runApp(ScrollablePositionedListExample());
@@ -54,7 +56,7 @@ class ScrollablePositionedListPage extends StatefulWidget {
 }
 
 class _ScrollablePositionedListPageState
-    extends State<ScrollablePositionedListPage> {
+    extends State<ScrollablePositionedListPage> with TickerProviderStateMixin  {
   /// Controller to scroll or jump to a particular item.
   final ItemScrollController itemScrollController = ItemScrollController();
 
@@ -80,6 +82,23 @@ class _ScrollablePositionedListPageState
             minItemHeight);
     itemColors = List<Color>.generate(numberOfItems,
         (int _) => Color(colorGenerator.nextInt(randomMax)).withOpacity(1));
+
+    _addItemController = AnimationController(
+
+    ///duration 为正向执行动画的时间
+    duration: Duration(milliseconds: 200),
+
+    ///反向执行动画的时间
+    reverseDuration: Duration(milliseconds: 0),
+
+    ///controller的变化的最小值
+    lowerBound: 0.0,
+
+    ///controller变化的最大值
+    upperBound: 1.0,
+
+    ///绑定页面的Ticker
+    vsync: this);
   }
 
   @override
@@ -87,59 +106,65 @@ class _ScrollablePositionedListPageState
     return Material(
       child: OrientationBuilder(
         builder: (context, orientation) => Scaffold(
-          appBar: ScrollAppBar(
+          // appBar:
+          body: Stack(
+            children: [
+              Column(
+                children: <Widget>[
+                  Expanded(
+                    child: CupertinoScrollbar(
+                      child: ScrollConfiguration(
+                        behavior: MyBehavior(),
+                        child: NotificationListener(
+                          onNotification: (OverscrollNotification value) {
+                            // final controller = itemScrollController.getPrimaryScrollController()!;
+                            // if (value.overscroll < 0 && controller.offset + value.overscroll <= 0) {
+                            //   if (controller.offset != 0) controller.jumpTo(0);
+                            //   return true;
+                            // }
+                            // if (controller.offset + value.overscroll >= controller.position.maxScrollExtent) {
+                            //   if (controller.offset != controller.position.maxScrollExtent) controller.jumpTo(controller.position.maxScrollExtent);
+                            //   return true;
+                            // }
+                            // controller.jumpTo(controller.offset + value.overscroll);
+                            return true;
+                          },
+                          child: list(orientation),
+                        ),
+                      ),
+                    ),
+                  ),
+                  positionsView,
+                  Row(
+                  children: <Widget>[
+                    Column(
+                      children: <Widget>[
+                        scrollControlButtons,
+                        const SizedBox(height: 10),
+                        jumpControlButtons,
+                        alignmentControl,
+                      ],
+                    ),
+                  ],
+                )
+              ],
+            ),
+            ScrollAppBar(
             title: Text("TextTitle"),
             controller: itemScrollController.getPrimaryScrollController() ?? ScrollController(keepScrollOffset: false),
           ),
-          body: Column(
-            children: <Widget>[
-              Expanded(
-                child: CupertinoScrollbar(
-                  child: ScrollConfiguration(
-                    behavior: MyBehavior(),
-                    child: NotificationListener(
-                      onNotification: (OverscrollNotification value) {
-                        // final controller = itemScrollController.getPrimaryScrollController()!;
-                        // if (value.overscroll < 0 && controller.offset + value.overscroll <= 0) {
-                        //   if (controller.offset != 0) controller.jumpTo(0);
-                        //   return true;
-                        // }
-                        // if (controller.offset + value.overscroll >= controller.position.maxScrollExtent) {
-                        //   if (controller.offset != controller.position.maxScrollExtent) controller.jumpTo(controller.position.maxScrollExtent);
-                        //   return true;
-                        // }
-                        // controller.jumpTo(controller.offset + value.overscroll);
-                        return true;
-                      },
-                      child: list(orientation),
-                    ),
-                  ),
-                ),
-              ),
-              positionsView,
-              Row(
-                children: <Widget>[
-                  Column(
-                    children: <Widget>[
-                      scrollControlButtons,
-                      const SizedBox(height: 10),
-                      jumpControlButtons,
-                      alignmentControl,
-                    ],
-                  ),
-                ],
-              )
-            ],
-          ),
+          ],),
+
           floatingActionButton: FloatingActionButton(
             child: Icon(Icons.add),
             onPressed: () {
               setState(() {
-                itemColors.add(Color(Random().nextInt(randomMax)).withOpacity(1));
-                itemHeights.add(numberOfItems.toDouble() + 50);
-                numberOfItems = itemHeights.length;
+                scrollTo(numberOfItems - 1);
+
                 SchedulerBinding.instance!.addPostFrameCallback((_) {
-                  scrollTo(numberOfItems - 1);
+                  itemColors.add(Color(Random().nextInt(randomMax)).withOpacity(1));
+                  itemHeights.add(numberOfItems.toDouble() + 50);
+                  numberOfItems = itemHeights.length;
                   // jumpTo(numberOfItems - 1);
                 });
               });
@@ -178,10 +203,8 @@ class _ScrollablePositionedListPageState
         itemPositionsListener: itemPositionsListener,
         reverse: reversed,
         physics: ClampingScrollPhysics(),
-        padding: EdgeInsets.only(bottom: 250),
-        scrollDirection: orientation == Orientation.portrait
-            ? Axis.vertical
-            : Axis.horizontal,
+        padding: EdgeInsets.only(top: 80, bottom: 250),
+        scrollDirection: orientation == Orientation.portrait ? Axis.vertical : Axis.horizontal,
       );
 
   Widget get positionsView => ValueListenableBuilder<Iterable<ItemPosition>>(
@@ -283,7 +306,7 @@ class _ScrollablePositionedListPageState
 
   /// Generate item number [i].
   Widget item(int i, Orientation orientation) {
-    return SizedBox(
+   var sb =  SizedBox(
       height: orientation == Orientation.portrait ? itemHeights[i] : null,
       width: orientation == Orientation.landscape ? itemHeights[i] : null,
       child: Container(
@@ -293,6 +316,21 @@ class _ScrollablePositionedListPageState
         ),
       ),
     );
+    _addItemController.reset();
+    _addItemController.forward();
+    if (itemHeights.length - 1 == i)
+      return FadeTransition(
+          opacity: _addItemController,
+          //将要执行动画的子view
+          child: sb);
+    else
+      return sb;
+  }
+
+  @override
+  void dispose() {
+    _addItemController.dispose();
+    super.dispose();
   }
 }
 class MyBehavior extends ScrollBehavior {
