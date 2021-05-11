@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:scroll_app_bar/scroll_app_bar.dart';
@@ -11,7 +12,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 int numberOfItems = 0;
 const minItemHeight = 20.0;
 const maxItemHeight = 150.0;
-const scrollDuration = Duration(milliseconds: 400);
+const scrollDuration = Duration(milliseconds: 200);
 
 const randomMax = 1 << 32;
 
@@ -93,10 +94,28 @@ class _ScrollablePositionedListPageState
           body: Column(
             children: <Widget>[
               Expanded(
+                child: CupertinoScrollbar(
                   child: ScrollConfiguration(
-                behavior: MyBehavior(),
-                child: list(orientation),
-              )),
+                    behavior: MyBehavior(),
+                    child: NotificationListener(
+                      onNotification: (OverscrollNotification value) {
+                        // final controller = itemScrollController.getPrimaryScrollController()!;
+                        // if (value.overscroll < 0 && controller.offset + value.overscroll <= 0) {
+                        //   if (controller.offset != 0) controller.jumpTo(0);
+                        //   return true;
+                        // }
+                        // if (controller.offset + value.overscroll >= controller.position.maxScrollExtent) {
+                        //   if (controller.offset != controller.position.maxScrollExtent) controller.jumpTo(controller.position.maxScrollExtent);
+                        //   return true;
+                        // }
+                        // controller.jumpTo(controller.offset + value.overscroll);
+                        return true;
+                      },
+                      child: list(orientation),
+                    ),
+                  ),
+                ),
+              ),
               positionsView,
               Row(
                 children: <Widget>[
@@ -116,13 +135,15 @@ class _ScrollablePositionedListPageState
             child: Icon(Icons.add),
             onPressed: () {
               setState(() {
-                itemColors.add(Color(Random(42490823).nextInt(randomMax)).withOpacity(1));
+                itemColors.add(Color(Random().nextInt(randomMax)).withOpacity(1));
                 itemHeights.add(numberOfItems.toDouble() + 50);
                 numberOfItems = itemHeights.length;
+                SchedulerBinding.instance!.addPostFrameCallback((_) {
+                  scrollTo(numberOfItems - 1);
+                  // jumpTo(numberOfItems - 1);
+                });
               });
-              SchedulerBinding.instance!.addPostFrameCallback((_) {
-                scrollTo(numberOfItems - 1);
-              });
+
             },
           ),
         ),

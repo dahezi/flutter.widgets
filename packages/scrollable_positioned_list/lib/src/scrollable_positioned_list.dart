@@ -463,6 +463,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
       // Scroll directly.
       final localScrollAmount = itemPosition.itemLeadingEdge *
           primary.scrollController.position.viewportDimension;
+      print("Scroll Scrolldirectly  ${localScrollAmount}");
       await primary.scrollController.animateTo(
           primary.scrollController.offset +
               localScrollAmount -
@@ -473,7 +474,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
       final scrollAmount = _screenScrollCount *
           primary.scrollController.position.viewportDimension;
       final startCompleter = Completer<void>();
-      Completer? endCompleter = Completer<void>();
+      final endCompleter = Completer<void>();
       startAnimationCallback = () {
         SchedulerBinding.instance!.addPostFrameCallback((_) async {
           startAnimationCallback = () {};
@@ -481,11 +482,12 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
           opacity.parent = _opacityAnimation(opacityAnimationWeights).animate(
               AnimationController(vsync: this, duration: duration)..forward());
           print("secondary.scrollController ${-direction}");
-          // secondary.scrollController.jumpTo(-direction *
-          //     (_screenScrollCount *
-          //             primary.scrollController.position.viewportDimension -
-          //         alignment *
-          //             secondary.scrollController.position.viewportDimension));
+
+          var sec = -direction *
+              (_screenScrollCount * primary.scrollController.position.viewportDimension -
+                  alignment * secondary.scrollController.position.viewportDimension);
+          print("sec ${sec}");
+          secondary.scrollController.jumpTo(sec);
 
           startCompleter.complete(primary.scrollController.animateTo(
               primary.scrollController.offset + direction * scrollAmount,
@@ -493,14 +495,24 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
               curve: curve));
 
           final _itemPosition = primary.itemPositionsNotifier.itemPositions.value
-              .firstWhereOrNull(
-                  (ItemPosition itemPosition) => itemPosition.index == index);
-          print("startCompleter.complete ${_itemPosition}");
-          if (_itemPosition != null) {
-            endCompleter = null;
+              .firstWhereOrNull((ItemPosition itemPosition) => itemPosition.index == index);
+          print("_itemPosition ${_itemPosition}");
+
+          int max = primary.itemPositionsNotifier.itemPositions.value
+              .where((ItemPosition position) => position.itemLeadingEdge < 1)
+              .reduce((ItemPosition max, ItemPosition position) =>
+          position.itemLeadingEdge > max.itemLeadingEdge
+              ? position
+              : max)
+              .index;
+          print("_itemPosition $index < ${max}");
+
+          if (_itemPosition != null  && index < (max + 5)) {
+            // primary.itemPositionsNotifier.itemPositions.value.forEach((element) { print("itemPositions ${element}");});
             // Scroll directly.
             final localScrollAmount =
                 _itemPosition.itemLeadingEdge * primary.scrollController.position.viewportDimension;
+            print("localScrollAmount ${_itemPosition}");
             await primary.scrollController.animateTo(
                 primary.scrollController.offset +
                     localScrollAmount -
@@ -513,14 +525,14 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
               secondary.target = index;
               secondary.alignment = alignment;
               _isTransitioning = true;
+              opacity.parent = const AlwaysStoppedAnimation<double>(0);
             });
             await Future.wait<void>([startCompleter.future]); //, endCompleter.future
             _stopScroll();
 
             return;
-
           } else {
-            endCompleter!.complete(secondary.scrollController.animateTo(0, duration: duration, curve: curve));
+            endCompleter.complete(secondary.scrollController.animateTo(0, duration: duration, curve: curve));
             print("endCompleter.complete ");
           }
         });
@@ -532,9 +544,8 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
         secondary.alignment = alignment;
         _isTransitioning = true;
       });
-      print("Future.wait ");
-      await Future.wait<void>(
-          [startCompleter.future, if (endCompleter != null) endCompleter!.future]); //, endCompleter.future
+      print("Future.wait  $endCompleter ");
+      await Future.wait<void>([startCompleter.future, if (endCompleter != null) endCompleter.future]); //, .future
       _stopScroll();
     }
   }

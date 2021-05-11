@@ -319,6 +319,27 @@ class _PositionedListState extends State<PositionedList> {
             final itemOffset = reveal -
                 viewport.offset.pixels +
                 viewport.anchor * viewport.size.height;
+
+
+            // int min = positions
+            //     .where((ItemPosition position) => position.itemTrailingEdge > 0)
+            //     .reduce((ItemPosition min, ItemPosition position) =>
+            // position.itemTrailingEdge < min.itemTrailingEdge
+            //     ? position
+            //     : min)
+            //     .index;
+            //
+            // int max = positions
+            //     .where((ItemPosition position) => position.itemLeadingEdge < 1)
+            //     .reduce((ItemPosition max, ItemPosition position) =>
+            // position.itemLeadingEdge > max.itemLeadingEdge
+            //     ? position
+            //     : max)
+            //     .index;
+
+            // print("positions.add $min ${key.value} $max");
+            // print("positions.add ${key.value} ");
+
             positions.add(ItemPosition(
                 index: key.value,
                 itemLeadingEdge: itemOffset.round() /
