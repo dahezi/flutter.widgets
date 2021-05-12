@@ -244,7 +244,7 @@ class ItemScrollController {
     _scrollableListState = null;
   }
 
-  ScrollController? getPrimaryScrollController(){
+  ScrollController? getPrimaryScrollController() {
     return _scrollableListState?.primary.scrollController;
   }
 }
@@ -458,12 +458,10 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
     final itemPosition = primary.itemPositionsNotifier.itemPositions.value
         .firstWhereOrNull(
             (ItemPosition itemPosition) => itemPosition.index == index);
-    print("_startScroll $index ${itemPosition}");
     if (itemPosition != null) {
       // Scroll directly.
       final localScrollAmount = itemPosition.itemLeadingEdge *
           primary.scrollController.position.viewportDimension;
-      print("Scroll Scrolldirectly  ${localScrollAmount}");
       await primary.scrollController.animateTo(
           primary.scrollController.offset +
               localScrollAmount -
@@ -476,64 +474,23 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
       final startCompleter = Completer<void>();
       final endCompleter = Completer<void>();
       startAnimationCallback = () {
-        SchedulerBinding.instance!.addPostFrameCallback((_) async {
+        SchedulerBinding.instance!.addPostFrameCallback((_) {
           startAnimationCallback = () {};
 
-          opacity.parent = _opacityAnimation(opacityAnimationWeights)
-              .animate(AnimationController(vsync: this, duration: duration)..forward());
-          print("secondary.scrollController ${-direction}");
-
-          var sec = -direction *
-              (_screenScrollCount * primary.scrollController.position.viewportDimension -
-                  alignment * secondary.scrollController.position.viewportDimension);
-          print("sec ${sec}");
-          secondary.scrollController.jumpTo(sec);
+          opacity.parent = _opacityAnimation(opacityAnimationWeights).animate(
+              AnimationController(vsync: this, duration: duration)..forward());
+          secondary.scrollController.jumpTo(-direction *
+              (_screenScrollCount *
+                      primary.scrollController.position.viewportDimension -
+                  alignment *
+                      secondary.scrollController.position.viewportDimension));
 
           startCompleter.complete(primary.scrollController.animateTo(
               primary.scrollController.offset + direction * scrollAmount,
               duration: duration,
               curve: curve));
-
-          final _itemPosition = primary.itemPositionsNotifier.itemPositions.value
-              .firstWhereOrNull((ItemPosition itemPosition) => itemPosition.index == index);
-          print("_itemPosition ${_itemPosition}");
-
-          int max = primary.itemPositionsNotifier.itemPositions.value.isEmpty
-              ? 0
-              : primary.itemPositionsNotifier.itemPositions.value
-                  .where((ItemPosition position) => position.itemLeadingEdge < 1)
-                  .reduce((ItemPosition max, ItemPosition position) =>
-                      position.itemLeadingEdge > max.itemLeadingEdge ? position : max)
-              .index;
-          print("_itemPosition $index < ${max}");
-
-          if (_itemPosition != null  && index < (max + 2)) {
-            // primary.itemPositionsNotifier.itemPositions.value.forEach((element) { print("itemPositions ${element}");});
-            // Scroll directly.
-            final localScrollAmount =
-                _itemPosition.itemLeadingEdge * primary.scrollController.position.viewportDimension;
-            print("localScrollAmount ${_itemPosition}");
-            await primary.scrollController.animateTo(
-                primary.scrollController.offset +
-                    localScrollAmount -
-                    alignment * primary.scrollController.position.viewportDimension,
-                duration: duration,
-                curve: curve);
-            setState(() {
-              // TODO: _startScroll can be re-entrant, which invalidates this assert.
-              // assert(!_isTransitioning);
-              secondary.target = index;
-              secondary.alignment = alignment;
-              _isTransitioning = true;
-            });
-            await Future.wait<void>([startCompleter.future]); //, endCompleter.future
-            _stopScroll();
-
-            return;
-          } else {
-            endCompleter.complete(secondary.scrollController.animateTo(0, duration: duration, curve: curve));
-            print("endCompleter.complete ");
-          }
+          endCompleter.complete(secondary.scrollController
+              .animateTo(0, duration: duration, curve: curve));
         });
       };
       setState(() {
@@ -543,14 +500,12 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
         secondary.alignment = alignment;
         _isTransitioning = true;
       });
-      print("Future.wait  $endCompleter ");
-      await Future.wait<void>([startCompleter.future, if (endCompleter != null) endCompleter.future]); //, .future
+      await Future.wait<void>([startCompleter.future, endCompleter.future]);
       _stopScroll();
     }
   }
 
   void _stopScroll({bool canceled = false}) {
-    print("_stopScroll $_isTransitioning");
     if (!_isTransitioning) {
       return;
     }
@@ -565,7 +520,6 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
     }
 
     setState(() {
-      print("_stopScroll ${opacity.value}");
       if (opacity.value >= 0.5) {
         // Secondary [ListView] is more visible than the primary; make it the
         // new primary.
@@ -606,7 +560,6 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                   ? value
                   : element));
     }
-    // print("_updatePositions $itemPositions");
     widget.itemPositionsNotifier?.itemPositions.value = itemPositions;
   }
 }

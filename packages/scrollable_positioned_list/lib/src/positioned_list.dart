@@ -135,8 +135,7 @@ class _PositionedListState extends State<PositionedList> {
   @override
   void initState() {
     super.initState();
-    // assert(widget.controller != null);
-    scrollController = widget.controller ?? ScrollController(keepScrollOffset: false);
+    scrollController = widget.controller ?? ScrollController();
     scrollController.addListener(_schedulePositionNotificationUpdate);
     _schedulePositionNotificationUpdate();
   }
@@ -166,13 +165,6 @@ class _PositionedListState extends State<PositionedList> {
           physics: widget.physics,
           semanticChildCount: widget.semanticChildCount ?? widget.itemCount,
           slivers: <Widget>[
-            //floating now work
-            // SliverAppBar(
-            //   title: Text("SliverAppBar"),
-            //   floating: true,
-            //   pinned: false,
-            //   snap: true,
-            // ),
             if (widget.positionedIndex > 0)
               SliverPadding(
                 padding: _leadingSliverPadding,
@@ -319,27 +311,6 @@ class _PositionedListState extends State<PositionedList> {
             final itemOffset = reveal -
                 viewport.offset.pixels +
                 viewport.anchor * viewport.size.height;
-
-
-            // int min = positions
-            //     .where((ItemPosition position) => position.itemTrailingEdge > 0)
-            //     .reduce((ItemPosition min, ItemPosition position) =>
-            // position.itemTrailingEdge < min.itemTrailingEdge
-            //     ? position
-            //     : min)
-            //     .index;
-            //
-            // int max = positions
-            //     .where((ItemPosition position) => position.itemLeadingEdge < 1)
-            //     .reduce((ItemPosition max, ItemPosition position) =>
-            // position.itemLeadingEdge > max.itemLeadingEdge
-            //     ? position
-            //     : max)
-            //     .index;
-
-            // print("positions.add $min ${key.value} $max");
-            // print("positions.add ${key.value} ");
-
             positions.add(ItemPosition(
                 index: key.value,
                 itemLeadingEdge: itemOffset.round() /

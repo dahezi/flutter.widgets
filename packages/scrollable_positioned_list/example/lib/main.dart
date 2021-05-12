@@ -163,12 +163,15 @@ class _ScrollablePositionedListPageState
                 itemHeights.add(numberOfItems.toDouble() + 50);
                 numberOfItems = itemHeights.length;
               });
-              SchedulerBinding.instance!.addPostFrameCallback((_) {
+              Future.delayed(Duration(milliseconds: 100), (){
                 itemScrollController.scrollTo(
                     index: numberOfItems == 0 ? 0 : numberOfItems - 1,
                     duration: scrollDuration,
                     curve: Curves.linear,
                     alignment: alignment);
+              } );
+              SchedulerBinding.instance!.addPostFrameCallback((_) {
+
                 // jumpTo(numberOfItems - 1);
               });
 
