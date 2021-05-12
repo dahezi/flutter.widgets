@@ -6,7 +6,6 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:scroll_app_bar/scroll_app_bar.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 int numberOfItems = 0;
@@ -51,18 +50,17 @@ class ScrollablePositionedListPage extends StatefulWidget {
   const ScrollablePositionedListPage({Key? key}) : super(key: key);
 
   @override
-  _ScrollablePositionedListPageState createState() =>
-      _ScrollablePositionedListPageState();
+  _ScrollablePositionedListPageState createState() => _ScrollablePositionedListPageState();
 }
 
-class _ScrollablePositionedListPageState
-    extends State<ScrollablePositionedListPage> with TickerProviderStateMixin  {
+class _ScrollablePositionedListPageState extends State<ScrollablePositionedListPage>
+    with TickerProviderStateMixin
+    implements PrimaryChangedListener {
   /// Controller to scroll or jump to a particular item.
   final ItemScrollController itemScrollController = ItemScrollController();
 
   /// Listener that reports the position of items when the list is scrolled.
-  final ItemPositionsListener itemPositionsListener =
-      ItemPositionsListener.create();
+  final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
   late List<double> itemHeights;
   late List<Color> itemColors;
   bool reversed = false;
@@ -76,29 +74,26 @@ class _ScrollablePositionedListPageState
     final heightGenerator = Random(328902348);
     final colorGenerator = Random(42490823);
     itemHeights = List<double>.generate(
-        numberOfItems,
-        (int _) =>
-            heightGenerator.nextDouble() * (maxItemHeight - minItemHeight) +
-            minItemHeight);
-    itemColors = List<Color>.generate(numberOfItems,
-        (int _) => Color(colorGenerator.nextInt(randomMax)).withOpacity(1));
+        numberOfItems, (int _) => heightGenerator.nextDouble() * (maxItemHeight - minItemHeight) + minItemHeight);
+    itemColors =
+        List<Color>.generate(numberOfItems, (int _) => Color(colorGenerator.nextInt(randomMax)).withOpacity(1));
 
     _addItemController = AnimationController(
 
-    ///duration 为正向执行动画的时间
-    duration: Duration(milliseconds: 200),
+        ///duration 为正向执行动画的时间
+        duration: Duration(milliseconds: 200),
 
-    ///反向执行动画的时间
-    reverseDuration: Duration(milliseconds: 0),
+        ///反向执行动画的时间
+        reverseDuration: Duration(milliseconds: 0),
 
-    ///controller的变化的最小值
-    lowerBound: 0.0,
+        ///controller的变化的最小值
+        lowerBound: 0.0,
 
-    ///controller变化的最大值
-    upperBound: 1.0,
+        ///controller变化的最大值
+        upperBound: 1.0,
 
-    ///绑定页面的Ticker
-    vsync: this);
+        ///绑定页面的Ticker
+        vsync: this);
   }
 
   @override
@@ -136,24 +131,26 @@ class _ScrollablePositionedListPageState
                   ),
                   positionsView,
                   Row(
-                  children: <Widget>[
-                    Column(
-                      children: <Widget>[
-                        scrollControlButtons,
-                        const SizedBox(height: 10),
-                        jumpControlButtons,
-                        alignmentControl,
-                      ],
-                    ),
-                  ],
-                )
-              ],
-            ),
-            ScrollAppBar(
-            title: Text("TextTitle"),
-            controller: itemScrollController.getPrimaryScrollController() ?? ScrollController(keepScrollOffset: false),
+                    children: <Widget>[
+                      Column(
+                        children: <Widget>[
+                          scrollControlButtons,
+                          const SizedBox(height: 10),
+                          jumpControlButtons,
+                          alignmentControl,
+                        ],
+                      ),
+                    ],
+                  )
+                ],
+              ),
+              // ScrollAppBar(
+              //   title: Text("TextTitle"),
+              //   controller:
+              //       itemScrollController.getPrimaryScrollController() ?? ScrollController(keepScrollOffset: false),
+              // ),
+            ],
           ),
-          ],),
 
           floatingActionButton: FloatingActionButton(
             child: Icon(Icons.add),
@@ -163,18 +160,16 @@ class _ScrollablePositionedListPageState
                 itemHeights.add(numberOfItems.toDouble() + 50);
                 numberOfItems = itemHeights.length;
               });
-              Future.delayed(Duration(milliseconds: 100), (){
+              Future.delayed(Duration(milliseconds: 100), () {
                 itemScrollController.scrollTo(
                     index: numberOfItems == 0 ? 0 : numberOfItems - 1,
                     duration: scrollDuration,
                     curve: Curves.linear,
                     alignment: alignment);
-              } );
+              });
               SchedulerBinding.instance!.addPostFrameCallback((_) {
-
                 // jumpTo(numberOfItems - 1);
               });
-
             },
           ),
         ),
@@ -203,6 +198,7 @@ class _ScrollablePositionedListPageState
       );
 
   Widget list(Orientation orientation) => ScrollablePositionedList.builder(
+        primaryChangedListener: this,
         itemCount: itemHeights.length,
         itemBuilder: (context, index) => item(index, orientation),
         itemScrollController: itemScrollController,
@@ -225,9 +221,7 @@ class _ScrollablePositionedListPageState
             min = positions
                 .where((ItemPosition position) => position.itemTrailingEdge > 0)
                 .reduce((ItemPosition min, ItemPosition position) =>
-                    position.itemTrailingEdge < min.itemTrailingEdge
-                        ? position
-                        : min)
+                    position.itemTrailingEdge < min.itemTrailingEdge ? position : min)
                 .index;
             // Determine the last visible item by finding the item with the
             // greatest leading edge that is less than 1.  i.e. the last
@@ -235,9 +229,7 @@ class _ScrollablePositionedListPageState
             max = positions
                 .where((ItemPosition position) => position.itemLeadingEdge < 1)
                 .reduce((ItemPosition max, ItemPosition position) =>
-                    position.itemLeadingEdge > max.itemLeadingEdge
-                        ? position
-                        : max)
+                    position.itemLeadingEdge > max.itemLeadingEdge ? position : max)
                 .index;
           }
           return Row(
@@ -301,18 +293,14 @@ class _ScrollablePositionedListPageState
         style: _scrollButtonStyle,
       );
 
-  void scrollTo(int index) => itemScrollController.scrollTo(
-      index: index,
-      duration: scrollDuration,
-      curve: Curves.linear,
-      alignment: alignment);
+  void scrollTo(int index) =>
+      itemScrollController.scrollTo(index: index, duration: scrollDuration, curve: Curves.linear, alignment: alignment);
 
-  void jumpTo(int index) =>
-      itemScrollController.jumpTo(index: index, alignment: alignment);
+  void jumpTo(int index) => itemScrollController.jumpTo(index: index, alignment: alignment);
 
   /// Generate item number [i].
   Widget item(int i, Orientation orientation) {
-   var sb =  SizedBox(
+    var sb = SizedBox(
       height: orientation == Orientation.portrait ? itemHeights[i] : null,
       width: orientation == Orientation.landscape ? itemHeights[i] : null,
       child: Container(
@@ -338,11 +326,16 @@ class _ScrollablePositionedListPageState
     _addItemController.dispose();
     super.dispose();
   }
+
+  @override
+  void onPrimaryChanged() {
+    print('onPrimaryChanged========');
+  }
 }
+
 class MyBehavior extends ScrollBehavior {
   @override
-  Widget buildViewportChrome(
-      BuildContext context, Widget child, AxisDirection axisDirection) {
+  Widget buildViewportChrome(BuildContext context, Widget child, AxisDirection axisDirection) {
     return child;
   }
 }
