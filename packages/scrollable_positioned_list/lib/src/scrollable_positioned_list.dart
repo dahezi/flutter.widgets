@@ -37,6 +37,7 @@ class ScrollablePositionedList extends StatefulWidget {
   const ScrollablePositionedList.builder({
     required this.itemCount,
     required this.itemBuilder,
+    required this.primaryChangedListener,
     Key? key,
     this.itemScrollController,
     ItemPositionsListener? itemPositionsListener,
@@ -62,6 +63,7 @@ class ScrollablePositionedList extends StatefulWidget {
   const ScrollablePositionedList.separated({
     required this.itemCount,
     required this.itemBuilder,
+    required this.primaryChangedListener,
     required this.separatorBuilder,
     Key? key,
     this.itemScrollController,
@@ -82,6 +84,9 @@ class ScrollablePositionedList extends StatefulWidget {
         assert(separatorBuilder != null),
         itemPositionsNotifier = itemPositionsListener as ItemPositionsNotifier?,
         super(key: key);
+
+  ///当primary和second进行转换的时候进行回调
+  final PrimaryChangedListener primaryChangedListener;
 
   /// Number of items the [itemBuilder] can produce.
   final int itemCount;
@@ -526,6 +531,8 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
         var temp = primary;
         primary = secondary;
         secondary = temp;
+        //当列表转换的时候发起回调
+        widget.primaryChangedListener.onPrimaryChanged();
       }
       _isTransitioning = false;
       opacity.parent = const AlwaysStoppedAnimation<double>(0);
@@ -579,4 +586,8 @@ class _ListDisplayDetails {
   double alignment = 0;
 
   final Key key;
+}
+
+abstract class PrimaryChangedListener{
+  void onPrimaryChanged();
 }
