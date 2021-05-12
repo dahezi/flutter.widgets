@@ -498,12 +498,12 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
               .firstWhereOrNull((ItemPosition itemPosition) => itemPosition.index == index);
           print("_itemPosition ${_itemPosition}");
 
-          int max = primary.itemPositionsNotifier.itemPositions.value
-              .where((ItemPosition position) => position.itemLeadingEdge < 1)
-              .reduce((ItemPosition max, ItemPosition position) =>
-          position.itemLeadingEdge > max.itemLeadingEdge
-              ? position
-              : max)
+          int max = primary.itemPositionsNotifier.itemPositions.value.isEmpty
+              ? 0
+              : primary.itemPositionsNotifier.itemPositions.value
+                  .where((ItemPosition position) => position.itemLeadingEdge < 1)
+                  .reduce((ItemPosition max, ItemPosition position) =>
+                      position.itemLeadingEdge > max.itemLeadingEdge ? position : max)
               .index;
           print("_itemPosition $index < ${max}");
 

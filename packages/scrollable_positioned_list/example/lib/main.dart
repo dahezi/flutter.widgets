@@ -157,16 +157,19 @@ class _ScrollablePositionedListPageState
 
           floatingActionButton: FloatingActionButton(
             child: Icon(Icons.add),
-            onPressed: () {
+            onPressed: () async {
               setState(() {
-                scrollTo(numberOfItems - 1);
-
-                SchedulerBinding.instance!.addPostFrameCallback((_) {
-                  itemColors.add(Color(Random().nextInt(randomMax)).withOpacity(1));
-                  itemHeights.add(numberOfItems.toDouble() + 50);
-                  numberOfItems = itemHeights.length;
-                  // jumpTo(numberOfItems - 1);
-                });
+                itemColors.add(Color(Random().nextInt(randomMax)).withOpacity(1));
+                itemHeights.add(numberOfItems.toDouble() + 50);
+                numberOfItems = itemHeights.length;
+              });
+              SchedulerBinding.instance!.addPostFrameCallback((_) {
+                itemScrollController.scrollTo(
+                    index: numberOfItems == 0 ? 0 : numberOfItems - 1,
+                    duration: scrollDuration,
+                    curve: Curves.linear,
+                    alignment: alignment);
+                // jumpTo(numberOfItems - 1);
               });
 
             },
@@ -298,7 +301,7 @@ class _ScrollablePositionedListPageState
   void scrollTo(int index) => itemScrollController.scrollTo(
       index: index,
       duration: scrollDuration,
-      curve: Curves.easeInOutCubic,
+      curve: Curves.linear,
       alignment: alignment);
 
   void jumpTo(int index) =>
