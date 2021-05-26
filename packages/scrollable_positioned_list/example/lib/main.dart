@@ -204,6 +204,7 @@ class _ScrollablePositionedListPageState extends State<ScrollablePositionedListP
         itemScrollController: itemScrollController,
         itemPositionsListener: itemPositionsListener,
         reverse: reversed,
+        shrinkWrap: true,
         physics: ClampingScrollPhysics(),
         padding: EdgeInsets.only(top: 80, bottom: 250),
         scrollDirection: orientation == Orientation.portrait ? Axis.vertical : Axis.horizontal,

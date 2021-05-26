@@ -37,9 +37,10 @@ class ScrollablePositionedList extends StatefulWidget {
   const ScrollablePositionedList.builder({
     required this.itemCount,
     required this.itemBuilder,
-    required this.primaryChangedListener,
+    this.primaryChangedListener,
     Key? key,
     this.itemScrollController,
+    this.shrinkWrap = false,
     ItemPositionsListener? itemPositionsListener,
     this.initialScrollIndex = 0,
     this.initialAlignment = 0,
@@ -63,9 +64,10 @@ class ScrollablePositionedList extends StatefulWidget {
   const ScrollablePositionedList.separated({
     required this.itemCount,
     required this.itemBuilder,
-    required this.primaryChangedListener,
+    this.primaryChangedListener,
     required this.separatorBuilder,
     Key? key,
+    this.shrinkWrap = false,
     this.itemScrollController,
     ItemPositionsListener? itemPositionsListener,
     this.initialScrollIndex = 0,
@@ -86,7 +88,7 @@ class ScrollablePositionedList extends StatefulWidget {
         super(key: key);
 
   ///当primary和second进行转换的时候进行回调
-  final PrimaryChangedListener primaryChangedListener;
+  final PrimaryChangedListener? primaryChangedListener;
 
   /// Number of items the [itemBuilder] can produce.
   final int itemCount;
@@ -125,6 +127,15 @@ class ScrollablePositionedList extends StatefulWidget {
   ///
   /// See [ScrollView.reverse].
   final bool reverse;
+
+  /// {@template flutter.widgets.scroll_view.shrinkWrap}
+  /// Whether the extent of the scroll view in the [scrollDirection] should be
+  /// determined by the contents being viewed.
+  ///
+  ///  Defaults to false.
+  ///
+  /// See [ScrollView.shrinkWrap].
+  final bool shrinkWrap;
 
   /// How the scroll view should respond to user input.
   ///
@@ -358,6 +369,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                       cacheExtent: cacheExtent,
                       alignment: primary.alignment,
                       physics: widget.physics,
+                      shrinkWrap: widget.shrinkWrap,
                       addSemanticIndexes: widget.addSemanticIndexes,
                       semanticChildCount: widget.semanticChildCount,
                       padding: widget.padding,
@@ -387,6 +399,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                         cacheExtent: cacheExtent,
                         alignment: secondary.alignment,
                         physics: widget.physics,
+                        shrinkWrap: widget.shrinkWrap,
                         addSemanticIndexes: widget.addSemanticIndexes,
                         semanticChildCount: widget.semanticChildCount,
                         padding: widget.padding,
@@ -532,7 +545,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
         primary = secondary;
         secondary = temp;
         //当列表转换的时候发起回调
-        widget.primaryChangedListener.onPrimaryChanged();
+        widget.primaryChangedListener?.onPrimaryChanged();
       }
       _isTransitioning = false;
       opacity.parent = const AlwaysStoppedAnimation<double>(0);
