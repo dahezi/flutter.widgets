@@ -52,6 +52,7 @@ class ScrollablePositionedList extends StatefulWidget {
     this.addAutomaticKeepAlives = true,
     this.addRepaintBoundaries = true,
     this.minCacheExtent,
+    this.closeToTrailing = false,
   })  : assert(itemCount != null),
         assert(itemBuilder != null),
         itemPositionsNotifier = itemPositionsListener as ItemPositionsNotifier?,
@@ -78,6 +79,7 @@ class ScrollablePositionedList extends StatefulWidget {
     this.addSemanticIndexes = true,
     this.addAutomaticKeepAlives = true,
     this.addRepaintBoundaries = true,
+    this.closeToTrailing = false,
     this.minCacheExtent,
   })  : assert(itemCount != null),
         assert(itemBuilder != null),
@@ -165,6 +167,8 @@ class ScrollablePositionedList extends StatefulWidget {
   /// in builds of widgets that would otherwise already be built in the
   /// cache extent.
   final double? minCacheExtent;
+
+  final bool closeToTrailing;
 
   @override
   State<StatefulWidget> createState() => _ScrollablePositionedListState();
@@ -361,6 +365,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                       addSemanticIndexes: widget.addSemanticIndexes,
                       semanticChildCount: widget.semanticChildCount,
                       padding: widget.padding,
+                      closeToTrailing: widget.closeToTrailing,
                       addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
                       addRepaintBoundaries: widget.addRepaintBoundaries,
                     ),
@@ -389,6 +394,7 @@ class _ScrollablePositionedListState extends State<ScrollablePositionedList>
                         physics: widget.physics,
                         addSemanticIndexes: widget.addSemanticIndexes,
                         semanticChildCount: widget.semanticChildCount,
+                        closeToTrailing: widget.closeToTrailing,
                         padding: widget.padding,
                         addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
                         addRepaintBoundaries: widget.addRepaintBoundaries,

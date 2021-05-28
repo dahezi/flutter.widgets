@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -42,6 +44,7 @@ class PositionedList extends StatefulWidget {
     this.addSemanticIndexes = true,
     this.addRepaintBoundaries = true,
     this.addAutomaticKeepAlives = true,
+    this.closeToTrailing = false,
   })  : assert(itemCount != null),
         assert(itemBuilder != null),
         assert((positionedIndex == 0) || (positionedIndex < itemCount));
@@ -115,6 +118,8 @@ class PositionedList extends StatefulWidget {
   /// See [SliverChildBuilderDelegate.addRepaintBoundaries].
   final bool addRepaintBoundaries;
 
+  final bool closeToTrailing;
+
   /// Whether to wrap each child in an [AutomaticKeepAlive].
   ///
   /// See [SliverChildBuilderDelegate.addAutomaticKeepAlives].
@@ -125,7 +130,7 @@ class PositionedList extends StatefulWidget {
 }
 
 class _PositionedListState extends State<PositionedList> {
-  final Key _centerKey = UniqueKey();
+  final GlobalKey _centerKey = GlobalKey();
 
   final registeredElements = ValueNotifier<Set<Element>?>(null);
   late final ScrollController scrollController;
@@ -153,7 +158,12 @@ class _PositionedListState extends State<PositionedList> {
   }
 
   @override
-  Widget build(BuildContext context) => RegistryWidget(
+  Widget build(BuildContext context) {
+    print(" widget.positionedIndex  ${widget.positionedIndex}");
+    var h = _centerKey.currentContext?.findRenderObject()?.semanticBounds.size.height;
+    var maxScrollExtent = (scrollController.hasClients) ? scrollController.position.maxScrollExtent : null;
+    print(" h  ${h} maxScrollExtent $maxScrollExtent");
+    return RegistryWidget(
         elementNotifier: registeredElements,
         child: UnboundedCustomScrollView(
           anchor: widget.alignment,
@@ -165,9 +175,16 @@ class _PositionedListState extends State<PositionedList> {
           physics: widget.physics,
           semanticChildCount: widget.semanticChildCount ?? widget.itemCount,
           slivers: <Widget>[
-            if (widget.positionedIndex > 0)
-              SliverPadding(
-                padding: _leadingSliverPadding,
+          if (widget.closeToTrailing && maxScrollExtent != null && maxScrollExtent <= 0)
+            SliverToBoxAdapter(
+              child: Container(
+                color: kReleaseMode ? null : Colors.lightBlueAccent,
+                height: math.max(0, 80 * (10 - widget.itemCount).toDouble()),
+              ),
+            ),
+          if (widget.positionedIndex > 0)
+            SliverPadding(
+                padding: _leadingSliverPadding,//EdgeInsets.all(0),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => widget.separatorBuilder == null
@@ -183,10 +200,11 @@ class _PositionedListState extends State<PositionedList> {
                   ),
                 ),
               ),
-            SliverPadding(
-              key: _centerKey,
-              padding: _centerSliverPadding,
-              sliver: SliverList(
+          SliverPadding(
+            key: _centerKey,
+            padding: _centerSliverPadding,
+            sliver: SliverList(
+              // extendedListDelegate: const ExtendedListDelegate(closeToTrailing: false),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) => widget.separatorBuilder == null
                       ? _buildItem(index + widget.positionedIndex)
@@ -199,28 +217,28 @@ class _PositionedListState extends State<PositionedList> {
                 ),
               ),
             ),
-            if (widget.positionedIndex >= 0 &&
-                widget.positionedIndex < widget.itemCount - 1)
-              SliverPadding(
-                padding: _trailingSliverPadding,
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => widget.separatorBuilder == null
-                        ? _buildItem(index + widget.positionedIndex + 1)
-                        : _buildSeparatedListElement(
-                            index + 2 * widget.positionedIndex + 1),
-                    childCount: widget.separatorBuilder == null
-                        ? widget.itemCount - widget.positionedIndex - 1
-                        : 2 * (widget.itemCount - widget.positionedIndex - 1),
-                    addSemanticIndexes: false,
-                    addRepaintBoundaries: widget.addRepaintBoundaries,
-                    addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
-                  ),
+          if (widget.positionedIndex >= 0 && widget.positionedIndex < widget.itemCount - 1)
+            SliverPadding(
+              padding: _trailingSliverPadding,
+              sliver: SliverList(
+                // extendedListDelegate: const ExtendedListDelegate(closeToTrailing: true),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => widget.separatorBuilder == null
+                      ? _buildItem(index + widget.positionedIndex + 1)
+                      : _buildSeparatedListElement(index + 2 * widget.positionedIndex + 1),
+                  childCount: widget.separatorBuilder == null
+                      ? widget.itemCount - widget.positionedIndex - 1
+                      : 2 * (widget.itemCount - widget.positionedIndex - 1),
+                  addSemanticIndexes: false,
+                  addRepaintBoundaries: widget.addRepaintBoundaries,
+                  addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
                 ),
               ),
-          ],
+            ),
+        ],
         ),
-      );
+    );
+  }
 
   Widget _buildSeparatedListElement(int index) {
     if (index.isEven) {

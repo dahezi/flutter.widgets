@@ -12,6 +12,10 @@ dependencies:
   flutter:
     sdk: flutter
   collection: ^1.15.0-nullsafety.4
+#  sliver_fill_remaining_box_adapter: ^0.1.1
+#  extended_sliver: ^2.0.0
+#  extended_list: ^3.0.0
+#  sliver_tools: ^0.2.2
 
 dev_dependencies:
   pedantic: ^1.10.0-0

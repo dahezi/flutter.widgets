@@ -6,12 +6,15 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:scroll_app_bar/scroll_app_bar.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 int numberOfItems = 0;
+int? min;
+int? max;
 const minItemHeight = 20.0;
 const maxItemHeight = 150.0;
-const scrollDuration = Duration(milliseconds: 1200);
+const scrollDuration = Duration(milliseconds: 1000);
 
 const randomMax = 1 << 32;
 
@@ -63,7 +66,7 @@ class _ScrollablePositionedListPageState extends State<ScrollablePositionedListP
   final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
   late List<double> itemHeights;
   late List<Color> itemColors;
-  bool reversed = false;
+  bool reversed = true;
 
   /// The alignment to be used next time the user scrolls or jumps to an item.
   double alignment = 0;
@@ -98,59 +101,64 @@ class _ScrollablePositionedListPageState extends State<ScrollablePositionedListP
 
   @override
   Widget build(BuildContext context) {
+    var cs = CupertinoScrollbar(
+      // child: ScrollConfiguration(
+        // behavior: MyBehavior(),
+        child: NotificationListener(
+          onNotification: (OverscrollNotification value) {
+            // final controller = itemScrollController.getPrimaryScrollController()!;
+            // if (value.overscroll < 0 && controller.offset + value.overscroll <= 0) {
+            //   if (controller.offset != 0) controller.jumpTo(0);
+            //   return true;
+            // }
+            // if (controller.offset + value.overscroll >= controller.position.maxScrollExtent) {
+            //   if (controller.offset != controller.position.maxScrollExtent) controller.jumpTo(controller.position.maxScrollExtent);
+            //   return true;
+            // }
+            // controller.jumpTo(controller.offset + value.overscroll);
+            return true;
+          },
+          child: list(Orientation.portrait),
+        ),
+      // ),
+    );
+
+    var oldBody = Stack(
+      children: [
+        Column(
+          children: <Widget>[
+            Expanded(child: cs),
+            positionsView,
+            Row(
+              children: <Widget>[
+                Column(
+                  children: <Widget>[
+                    scrollControlButtons,
+                    const SizedBox(height: 10),
+                    jumpControlButtons,
+                    alignmentControl,
+                  ],
+                ),
+              ],
+            )
+          ],
+        ),
+        ScrollAppBar(
+          title: Text("TextTitle"),
+          controller: itemScrollController.getPrimaryScrollController() ?? ScrollController(keepScrollOffset: false),
+        ),
+      ],);
+
+    var newBody = SizedBox(
+      child: cs,
+      height: 300,
+    );
+
     return Material(
       child: OrientationBuilder(
         builder: (context, orientation) => Scaffold(
           // appBar:
-          body: Stack(
-            children: [
-              Column(
-                children: <Widget>[
-                  Expanded(
-                    child: CupertinoScrollbar(
-                      child: ScrollConfiguration(
-                        behavior: MyBehavior(),
-                        child: NotificationListener(
-                          onNotification: (OverscrollNotification value) {
-                            // final controller = itemScrollController.getPrimaryScrollController()!;
-                            // if (value.overscroll < 0 && controller.offset + value.overscroll <= 0) {
-                            //   if (controller.offset != 0) controller.jumpTo(0);
-                            //   return true;
-                            // }
-                            // if (controller.offset + value.overscroll >= controller.position.maxScrollExtent) {
-                            //   if (controller.offset != controller.position.maxScrollExtent) controller.jumpTo(controller.position.maxScrollExtent);
-                            //   return true;
-                            // }
-                            // controller.jumpTo(controller.offset + value.overscroll);
-                            return true;
-                          },
-                          child: list(orientation),
-                        ),
-                      ),
-                    ),
-                  ),
-                  positionsView,
-                  Row(
-                    children: <Widget>[
-                      Column(
-                        children: <Widget>[
-                          scrollControlButtons,
-                          const SizedBox(height: 10),
-                          jumpControlButtons,
-                          alignmentControl,
-                        ],
-                      ),
-                    ],
-                  )
-                ],
-              ),
-              // ScrollAppBar(
-              //   title: Text("TextTitle"),
-              //   controller:
-              //       itemScrollController.getPrimaryScrollController() ?? ScrollController(keepScrollOffset: false),
-              // ),
-            ],
-          ),
+          body: oldBody,
 
           floatingActionButton: FloatingActionButton(
             child: Icon(Icons.add),
@@ -161,12 +169,15 @@ class _ScrollablePositionedListPageState extends State<ScrollablePositionedListP
                 numberOfItems = itemHeights.length;
               });
               Future.delayed(Duration(milliseconds: 100), () {
-                itemScrollController.scrollTo(
-                    index: numberOfItems == 0 ? 0 : numberOfItems - 1,
-                    duration: scrollDuration,
-                    curve: Curves.linear,
-                    alignment: alignment);
-              });
+                print("maxScrollExtent ${itemScrollController.getPrimaryScrollController()?.position.maxScrollExtent}");
+                // if (max != null && max! < numberOfItems - 1) return;
+                if ((itemScrollController.getPrimaryScrollController()?.position.maxScrollExtent ?? 0) >
+                    0) //(max! - min! + 1)
+                  itemScrollController.jumpTo(index: 0);
+                else
+                  itemScrollController.scrollTo(
+                      index: 0, duration: scrollDuration, curve: Curves.linear, alignment: alignment);
+              } );
               SchedulerBinding.instance!.addPostFrameCallback((_) {
                 // jumpTo(numberOfItems - 1);
               });
@@ -204,6 +215,7 @@ class _ScrollablePositionedListPageState extends State<ScrollablePositionedListP
         itemScrollController: itemScrollController,
         itemPositionsListener: itemPositionsListener,
         reverse: reversed,
+        closeToTrailing: true,
         physics: ClampingScrollPhysics(),
         padding: EdgeInsets.only(top: 80, bottom: 250),
         scrollDirection: orientation == Orientation.portrait ? Axis.vertical : Axis.horizontal,
@@ -212,8 +224,6 @@ class _ScrollablePositionedListPageState extends State<ScrollablePositionedListP
   Widget get positionsView => ValueListenableBuilder<Iterable<ItemPosition>>(
         valueListenable: itemPositionsListener.itemPositions,
         builder: (context, positions, child) {
-          int? min;
-          int? max;
           if (positions.isNotEmpty) {
             // Determine the first visible item by finding the item with the
             // smallest trailing edge that is greater than 0.  i.e. the first
@@ -300,24 +310,25 @@ class _ScrollablePositionedListPageState extends State<ScrollablePositionedListP
 
   /// Generate item number [i].
   Widget item(int i, Orientation orientation) {
-    var sb = SizedBox(
-      height: orientation == Orientation.portrait ? itemHeights[i] : null,
-      width: orientation == Orientation.landscape ? itemHeights[i] : null,
+    // if (i == 0) return Expanded(child: Text('111'));
+    var sb =  SizedBox(
+      height: orientation == Orientation.portrait ? itemHeights[numberOfItems - i - 1] : null,
+      width: orientation == Orientation.landscape ? itemHeights[numberOfItems - i - 1] : null,
       child: Container(
-        color: itemColors[i],
+        color: itemColors[numberOfItems - i - 1],
         child: Center(
-          child: Text('Item $i'),
+          child: Text('idx:$i Item ${numberOfItems - i - 1}'),
         ),
       ),
     );
     _addItemController.reset();
     _addItemController.forward();
-    if (itemHeights.length - 1 == i)
-      return FadeTransition(
-          opacity: _addItemController,
-          //将要执行动画的子view
-          child: sb);
-    else
+    // if (i==0)
+    //   return FadeTransition(
+    //       opacity: _addItemController,
+    //       //将要执行动画的子view
+    //       child: sb);
+    // else
       return sb;
   }
 
